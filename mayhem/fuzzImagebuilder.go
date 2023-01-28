@@ -1,10 +1,11 @@
-package fuzz
+package fuzzImagebuilder
 
 import "strconv"
 import "strings"
 import "github.com/openshift/imagebuilder/dockerfile/parser"
 import "github.com/openshift/imagebuilder/strslice"
 import "github.com/openshift/imagebuilder/signal"
+import fuzz "github.com/AdaLogics/go-fuzz-headers"
 
 
 func mayhemit(bytes []byte) int {
@@ -22,12 +23,25 @@ func mayhemit(bytes []byte) int {
             return 0
 
         case 1:
-            content := strings.NewReader(string(bytes))
+            fuzzConsumer := fuzz.NewConsumer(bytes)
+            var data string
+            err := fuzzConsumer.CreateSlice(&data)
+            if err != nil {
+                return 0
+            }
+
+            content := strings.NewReader(data)
             parser.Parse(content)
             return 0
 
         default:
-            content := string(bytes)
+            fuzzConsumer := fuzz.NewConsumer(bytes)
+            var content string
+            err := fuzzConsumer.CreateSlice(&content)
+            if err != nil {
+                return 0
+            }
+            
             signal.CheckSignal(content)
             return 0
 
